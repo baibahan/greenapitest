@@ -15,48 +15,50 @@
 
     .container {
       max-width: 1200px;
-      margin: 20px auto;
+      margin: 16px auto;
       background: #ffffff;
-      padding: 20px;
+      padding: 16px;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     .block {
-      margin-bottom: 16px;
+      margin-bottom: 12px;
     }
 
     label {
       display: block;
       font-weight: bold;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
     }
 
     input, textarea {
       width: 100%;
-      padding: 8px;
+      padding: 7px;
       box-sizing: border-box;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
+      font-size: 14px;
     }
 
     textarea {
       resize: none;
-      height: 90px;
+      height: 80px;
     }
 
     button {
-      padding: 8px 14px;
-      margin-top: 4px;
+      padding: 7px 14px;
       background: #2f80ed;
       color: #fff;
       border: none;
       border-radius: 4px;
       cursor: pointer;
+      font-size: 14px;
+      margin-right: 6px;
     }
 
     button:hover {
@@ -66,7 +68,7 @@
     .grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      gap: 16px;
       align-items: start;
     }
 
@@ -74,13 +76,13 @@
       background: #f4f4f4;
       padding: 12px;
       border-radius: 4px;
-      height: 140px;
+      height: 300px;
       overflow: auto;
       font-size: 13px;
     }
 
-    .inline-buttons button {
-      margin-right: 8px;
+    .buttons-row {
+      margin-bottom: 8px;
     }
   </style>
 </head>
@@ -99,49 +101,53 @@
   </div>
 
   <!-- Account methods -->
-  <div class="block inline-buttons">
+  <div class="block buttons-row">
     <button onclick="getSettings()">getSettings</button>
     <button onclick="getStateInstance()">getStateInstance</button>
   </div>
 
-  <!-- Send Message -->
-  <div class="block grid">
+  <!-- Main area -->
+  <div class="grid">
+
+    <!-- Left: actions -->
     <div>
-      <label>Телефон получателя (WhatsApp)</label>
-      <input id="phone" placeholder="77775869856">
 
-      <label>Текст сообщения</label>
-      <textarea id="message" placeholder="Введите сообщение"></textarea>
+      <!-- Send Message -->
+      <div class="block">
+        <label>Телефон получателя (WhatsApp)</label>
+        <input id="phone" placeholder="77775869856">
 
-      <button onclick="sendMessage()">sendMessage</button>
+        <label>Текст сообщения</label>
+        <textarea id="message" placeholder="Введите сообщение"></textarea>
+
+        <button onclick="sendMessage()">sendMessage</button>
+      </div>
+
+      <!-- Send File -->
+      <div class="block">
+        <label>URL файла</label>
+        <input id="fileUrl" placeholder="https://example.com/file.pdf">
+
+        <label>Имя файла</label>
+        <input id="fileName" placeholder="file.pdf">
+
+        <button onclick="sendFileByUrl()">sendFileByUrl</button>
+      </div>
+
     </div>
 
+    <!-- Right: API response -->
     <div>
       <label>Ответ API (read-only)</label>
       <pre id="response">Здесь будет ответ API</pre>
     </div>
-  </div>
 
-  <!-- Send File -->
-  <div class="block grid">
-    <div>
-      <label>URL файла</label>
-      <input id="fileUrl" placeholder="https://example.com/file.pdf">
-
-      <label>Имя файла</label>
-      <input id="fileName" placeholder="file.pdf">
-
-      <button onclick="sendFileByUrl()">sendFileByUrl</button>
-    </div>
-
-    <div>
-      <label>Ответ API (read-only)</label>
-      <pre id="responseFile">Здесь будет ответ API</pre>
-    </div>
   </div>
 </div>
 
 <script>
+  const responseBlock = document.getElementById("response");
+
   function normalizePhone(phone) {
     return phone.replace(/\D/g, "");
   }
@@ -158,16 +164,15 @@
     return `https://api.green-api.com/waInstance${id}/${method}/${token}`;
   }
 
-  async function request(url, options = {}, outputId = "response") {
-    const output = document.getElementById(outputId);
-    output.textContent = "Загрузка...";
+  async function request(url, options = {}) {
+    responseBlock.textContent = "Загрузка...";
 
     try {
       const res = await fetch(url, options);
       const data = await res.json();
-      output.textContent = JSON.stringify(data, null, 2);
+      responseBlock.textContent = JSON.stringify(data, null, 2);
     } catch (e) {
-      output.textContent = "Ошибка: " + e;
+      responseBlock.textContent = "Ошибка: " + e;
     }
   }
 
@@ -185,11 +190,11 @@
     const url = getBaseUrl("sendMessage");
     if (!url) return;
 
-    let phone = normalizePhone(document.getElementById("phone").value);
+    const phone = normalizePhone(document.getElementById("phone").value);
     const message = document.getElementById("message").value.trim();
 
     if (!phone || !message) {
-      alert("Введите номер и сообщение");
+      alert("Введите номер телефона и сообщение");
       return;
     }
 
@@ -200,19 +205,19 @@
         chatId: phone + "@c.us",
         message: message
       })
-    }, "response");
+    });
   }
 
   function sendFileByUrl() {
     const url = getBaseUrl("sendFileByUrl");
     if (!url) return;
 
-    let phone = normalizePhone(document.getElementById("phone").value);
+    const phone = normalizePhone(document.getElementById("phone").value);
     const fileUrl = document.getElementById("fileUrl").value.trim();
     const fileName = document.getElementById("fileName").value.trim();
 
     if (!phone || !fileUrl || !fileName) {
-      alert("Заполните все поля");
+      alert("Заполните все поля для отправки файла");
       return;
     }
 
@@ -224,7 +229,7 @@
         urlFile: fileUrl,
         fileName: fileName
       })
-    }, "responseFile");
+    });
   }
 </script>
 
