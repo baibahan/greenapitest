@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>GREEN-API Test Task</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f2f4f7;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 30px auto;
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    .block {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    input, textarea {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    button {
+      padding: 10px 14px;
+      margin-right: 8px;
+      background: #2f80ed;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #1c63c7;
+    }
+
+    .response {
+      margin-top: 20px;
+    }
+
+    pre {
+      background: #f4f4f4;
+      padding: 12px;
+      border-radius: 4px;
+      max-height: 400px;
+      overflow: auto;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>GREEN-API Test Task</h1>
+
+  <!-- Connection -->
+  <div class="block">
+    <label>ID Instance</label>
+    <input id="idInstance" placeholder="Введите idInstance">
+
+    <label>API Token Instance</label>
+    <input id="apiToken" placeholder="Введите ApiTokenInstance">
+  </div>
+
+  <!-- Methods -->
+  <div class="block">
+    <button onclick="getSettings()">getSettings</button>
+    <button onclick="getStateInstance()">getStateInstance</button>
+  </div>
+
+  <!-- Send Message -->
+  <div class="block">
+    <label>Телефон получателя (пример: 77001234567)</label>
+    <input id="phone" placeholder="Номер телефона">
+
+    <label>Текст сообщения</label>
+    <textarea id="message" placeholder="Введите сообщение"></textarea>
+
+    <button onclick="sendMessage()">sendMessage</button>
+  </div>
+
+  <!-- Send File -->
+  <div class="block">
+    <label>URL файла</label>
+    <input id="fileUrl" placeholder="https://example.com/file.pdf">
+
+    <label>Имя файла</label>
+    <input id="fileName" placeholder="file.pdf">
+
+    <button onclick="sendFileByUrl()">sendFileByUrl</button>
+  </div>
+
+  <!-- Response -->
+  <div class="response">
+    <label>Ответ API (read-only)</label>
+    <pre id="response">Здесь будет ответ API</pre>
+  </div>
+</div>
+
+<script>
+  const responseBlock = document.getElementById("response");
+
+  function getBaseUrl(method) {
+    const id = document.getElementById("idInstance").value.trim();
+    const token = document.getElementById("apiToken").value.trim();
+
+    if (!id || !token) {
+      alert("Введите idInstance и ApiTokenInstance");
+      return null;
+    }
+
+    return `https://api.green-api.com/waInstance${id}/${method}/${token}`;
+  }
+
+  async function request(url, options = {}) {
+    responseBlock.textContent = "Загрузка...";
+
+    try {
+      const res = await fetch(url, options);
+      const data = await res.json();
+      responseBlock.textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      responseBlock.textContent = "Ошибка: " + e;
+    }
+  }
+
+  function getSettings() {
+    const url = getBaseUrl("getSettings");
+    if (url) request(url);
+  }
+
+  function getStateInstance() {
+    const url = getBaseUrl("getStateInstance");
+    if (url) request(url);
+  }
+
+  function sendMessage() {
+    const url = getBaseUrl("sendMessage");
+    if (!url) return;
+
+    const phone = document.getElementById("phone").value.trim();
+    const message = document.getElementById("message").value.trim();
+
+    if (!phone || !message) {
+      alert("Введите номер телефона и сообщение");
+      return;
+    }
+
+    request(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chatId: phone + "@c.us",
+        message: message
+      })
+    });
+  }
+
+  function sendFileByUrl() {
+    const url = getBaseUrl("sendFileByUrl");
+    if (!url) return;
+
+    const phone = document.getElementById("phone").value.trim();
+    const fileUrl = document.getElementById("fileUrl").value.trim();
+    const fileName = document.getElementById("fileName").value.trim();
+
+    if (!phone || !fileUrl || !fileName) {
+      alert("Заполните все поля для отправки файла");
+      return;
+    }
+
+    request(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        chatId: phone + "@c.us",
+        urlFile: fileUrl,
+        fileName: fileName
+      })
+    });
+  }
+</script>
+
+</body>
+</html>
