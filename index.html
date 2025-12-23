@@ -14,21 +14,21 @@
     }
 
     .container {
-      max-width: 900px;
-      margin: 30px auto;
+      max-width: 1200px;
+      margin: 20px auto;
       background: #ffffff;
-      padding: 24px;
+      padding: 20px;
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
     h1 {
       text-align: center;
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     .block {
-      margin-bottom: 20px;
+      margin-bottom: 16px;
     }
 
     label {
@@ -41,17 +41,17 @@
       width: 100%;
       padding: 8px;
       box-sizing: border-box;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
     textarea {
-      resize: vertical;
-      min-height: 80px;
+      resize: none;
+      height: 90px;
     }
 
     button {
-      padding: 10px 14px;
-      margin-right: 8px;
+      padding: 8px 14px;
+      margin-top: 4px;
       background: #2f80ed;
       color: #fff;
       border: none;
@@ -63,17 +63,24 @@
       background: #1c63c7;
     }
 
-    .response {
-      margin-top: 20px;
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      align-items: start;
     }
 
     pre {
       background: #f4f4f4;
       padding: 12px;
       border-radius: 4px;
-      max-height: 400px;
+      height: 140px;
       overflow: auto;
-      font-size: 14px;
+      font-size: 13px;
+    }
+
+    .inline-buttons button {
+      margin-right: 8px;
     }
   </style>
 </head>
@@ -91,43 +98,53 @@
     <input id="apiToken" placeholder="Введите ApiTokenInstance">
   </div>
 
-  <!-- Methods -->
-  <div class="block">
+  <!-- Account methods -->
+  <div class="block inline-buttons">
     <button onclick="getSettings()">getSettings</button>
     <button onclick="getStateInstance()">getStateInstance</button>
   </div>
 
   <!-- Send Message -->
-  <div class="block">
-    <label>Телефон получателя (пример: 77001234567)</label>
-    <input id="phone" placeholder="Номер телефона">
+  <div class="block grid">
+    <div>
+      <label>Телефон получателя (WhatsApp)</label>
+      <input id="phone" placeholder="77775869856">
 
-    <label>Текст сообщения</label>
-    <textarea id="message" placeholder="Введите сообщение"></textarea>
+      <label>Текст сообщения</label>
+      <textarea id="message" placeholder="Введите сообщение"></textarea>
 
-    <button onclick="sendMessage()">sendMessage</button>
+      <button onclick="sendMessage()">sendMessage</button>
+    </div>
+
+    <div>
+      <label>Ответ API (read-only)</label>
+      <pre id="response">Здесь будет ответ API</pre>
+    </div>
   </div>
 
   <!-- Send File -->
-  <div class="block">
-    <label>URL файла</label>
-    <input id="fileUrl" placeholder="https://example.com/file.pdf">
+  <div class="block grid">
+    <div>
+      <label>URL файла</label>
+      <input id="fileUrl" placeholder="https://example.com/file.pdf">
 
-    <label>Имя файла</label>
-    <input id="fileName" placeholder="file.pdf">
+      <label>Имя файла</label>
+      <input id="fileName" placeholder="file.pdf">
 
-    <button onclick="sendFileByUrl()">sendFileByUrl</button>
-  </div>
+      <button onclick="sendFileByUrl()">sendFileByUrl</button>
+    </div>
 
-  <!-- Response -->
-  <div class="response">
-    <label>Ответ API (read-only)</label>
-    <pre id="response">Здесь будет ответ API</pre>
+    <div>
+      <label>Ответ API (read-only)</label>
+      <pre id="responseFile">Здесь будет ответ API</pre>
+    </div>
   </div>
 </div>
 
 <script>
-  const responseBlock = document.getElementById("response");
+  function normalizePhone(phone) {
+    return phone.replace(/\D/g, "");
+  }
 
   function getBaseUrl(method) {
     const id = document.getElementById("idInstance").value.trim();
@@ -141,15 +158,16 @@
     return `https://api.green-api.com/waInstance${id}/${method}/${token}`;
   }
 
-  async function request(url, options = {}) {
-    responseBlock.textContent = "Загрузка...";
+  async function request(url, options = {}, outputId = "response") {
+    const output = document.getElementById(outputId);
+    output.textContent = "Загрузка...";
 
     try {
       const res = await fetch(url, options);
       const data = await res.json();
-      responseBlock.textContent = JSON.stringify(data, null, 2);
+      output.textContent = JSON.stringify(data, null, 2);
     } catch (e) {
-      responseBlock.textContent = "Ошибка: " + e;
+      output.textContent = "Ошибка: " + e;
     }
   }
 
@@ -167,11 +185,11 @@
     const url = getBaseUrl("sendMessage");
     if (!url) return;
 
-    const phone = document.getElementById("phone").value.trim();
+    let phone = normalizePhone(document.getElementById("phone").value);
     const message = document.getElementById("message").value.trim();
 
     if (!phone || !message) {
-      alert("Введите номер телефона и сообщение");
+      alert("Введите номер и сообщение");
       return;
     }
 
@@ -182,19 +200,19 @@
         chatId: phone + "@c.us",
         message: message
       })
-    });
+    }, "response");
   }
 
   function sendFileByUrl() {
     const url = getBaseUrl("sendFileByUrl");
     if (!url) return;
 
-    const phone = document.getElementById("phone").value.trim();
+    let phone = normalizePhone(document.getElementById("phone").value);
     const fileUrl = document.getElementById("fileUrl").value.trim();
     const fileName = document.getElementById("fileName").value.trim();
 
     if (!phone || !fileUrl || !fileName) {
-      alert("Заполните все поля для отправки файла");
+      alert("Заполните все поля");
       return;
     }
 
@@ -206,7 +224,7 @@
         urlFile: fileUrl,
         fileName: fileName
       })
-    });
+    }, "responseFile");
   }
 </script>
 
